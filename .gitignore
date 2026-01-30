@@ -1,0 +1,17 @@
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# 依赖与构建（若有）
+node_modules/
+dist/
+*.log
+
+# 本地/临时文件
+*.local
+.env
+.env.local

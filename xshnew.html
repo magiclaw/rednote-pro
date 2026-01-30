@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FF2442">
+    <title>RedNote Pro - 细节质感精修版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;500;700;900&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://npm.elemecdn.com/lxgw-wenkai-screen-webfont/style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        :root {
+            --primary: #FF2442;
+            --sidebar-w: 380px;
+            --card-w: 450px;
+            --card-h: 600px;
+            
+            /* 动态变量 */
+            --user-font: 'Noto Serif SC', serif;
+            --cover-scale: 1.0;
+            --content-scale: 1.0;
+            --body-size: 16px;
+            --strong-color: #FF2442;
+            --content-head-color: #000000;
+            --content-text-color: #000000;
+            --card-radius: 12px;
+            
+            /* 封面图片变量 */
+            --img-aspect: auto; 
+            --img-fit: cover;
+            --portrait-bg: none;
+            
+            /* 封面排版 */
+            --cover-align-items: center;
+            --cover-text-align: center;
+            
+            /* 封面标题颜色 */
+            --title-color: #000000;
+            --title-gradient: none;
+            --title-clip: border-box;
+            --title-text-fill: currentColor;
+
+            /* 风格背景 */
+            --bg-fresh: linear-gradient(180deg, #A8E0D7 0%, #81B3E8 100%);
+            /* 🔴 [修改] 国潮背景：调浅颜色，更柔和 */
+            --bg-chinese: linear-gradient(135deg, #F7E9D7 0%, #E6CBA8 50%, #D4B483 100%); 
+            --bg-journal: #fffef8;
+            --bg-novel: #F5F1E5;
+            --bg-matcha: #e8f5e9;
+            
+            /* 🔴 [修改] 浪漫背景：中等饱和度，介于太浅和太深之间 */
+            --bg-romantic: linear-gradient(180deg, #E8D4FD 0%, #BBE2FC 100%);
+        }
+        
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background-color: #EEF1F5;
+            margin: 0; display: flex; height: 100vh; color: #333; overflow: hidden;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                overflow: auto;
+            }
+            
+            .sidebar {
+                width: 100% !important;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid #e6e8eb;
+            }
+            
+            .content {
+                flex: 1;
+                width: 100% !important;
+            }
+            
+            .card-wrapper {
+                transform: scale(0.8) !important;
+                margin: -40px 0 !important;
+            }
+            
+            .control-group {
+                margin-bottom: 16px !important;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                gap: 8px !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .card-wrapper {
+                transform: scale(0.6) !important;
+                margin: -80px 0 !important;
+            }
+        }
+
+        /* 左侧控制台 */
+        .sidebar { 
+            width: var(--sidebar-w); 
+            background: #fff; 
+            border-right: 1px solid #EEE; 
+            display: flex; 
+            flex-direction: column; 
+            flex-shrink: 0; 
+            z-index: 10;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.02);
+            position: relative;
+        }
+        
+        /* 侧边栏缩放把手 */
+        .sidebar-resizer {
+            position: absolute;
+            top: 0;
+            right: -4px;
+            width: 8px;
+            height: 100%;
+            cursor: col-resize;
+            z-index: 20;
+            transition: background 0.2s;
+        }
+        .sidebar-resizer:hover, .sidebar-resizer.resizing {
+            background: rgba(255, 36, 66, 0.2);
+        }
+
+        .sidebar-header { 
+            padding: 24px 20px; 
+            border-bottom: 1px solid #EEE; 
+            font-weight: 800; 
+            font-size: 20px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            letter-spacing: -0.5px;
+        }
+        .sidebar-header .logo { color: #1A1A1A; }
+        .sidebar-header .logo span { color: var(--primary); }
+        
+        .contact-btn-wrap {
+            padding: 0 20px 20px;
+        }
+        .contact-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+        }
+        .contact-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+            filter: brightness(1.1);
+        }
+        .contact-btn i { font-size: 18px; }
+
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 28px; }
+        .group-title { 
+            font-size: 13px; 
+            font-weight: 700; 
+            color: #A0A0A0; 
+            padding-bottom: 12px; 
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .group-title i { font-size: 16px; color: #CCC; }
+
+        /* 风格网格 */
+        .style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .style-btn {
+            padding: 10px; border: 1px solid transparent; border-radius: 12px; cursor: pointer;
+            font-size: 12px; font-weight: 600; color: #555;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+            transition: 0.2s; height: 60px;
+        }
+        
+        .btn-aurora { background: linear-gradient(135deg, #EADDFF 0%, #F8BBD0 100%); color: #6200EE; }
+        .btn-fresh  { background: #A8E0D7; color: #0097A7; }
+        .btn-chinese{ background: linear-gradient(135deg, #F7E9D7 0%, #D4B483 100%); color: #8D2828; border: 1px solid #CCA06C; }
+        .btn-journal{ background: #FFF8E1; color: #F57F17; border: 1px dashed #F57F17; }
+        .btn-novel  { background: #D7CCC8; color: #5D4037; }
+        .btn-matcha { background: #C8E6C9; color: #388E3C; }
+        .btn-romantic{ background: linear-gradient(180deg, #E8D4FD 0%, #BBE2FC 100%); color: #6A4F9C; border: 1px solid #D1C4E9; }
+        .btn-simple { background: #f5f5f5; color: #333; }
+        .btn-portrait{ background: #333; color: #fff; }
+
+        .style-btn.active { 
+            transform: scale(0.95); 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); 
+            border: 2px solid currentColor;
+        }
+
+        /* 色板 */
+        .palette-container { display: none; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 8px; }
+        .palette-container.show { display: flex; }
+        .color-swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .color-swatch:hover { transform: scale(1.1); z-index: 1; }
+
+        /* 对齐按钮 */
+        .align-group { display: flex; border: 1px solid #eee; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+        .align-btn { flex: 1; padding: 8px; background: #fff; border: none; cursor: pointer; font-size: 14px; color: #666; border-right: 1px solid #eee; }
+        .align-btn:last-child { border-right: none; }
+        .align-btn.active { background: var(--primary); color: #fff; }
+
+        input, select, textarea { 
+            width: 100%; padding: 12px; border: 1.5px solid #F0F0F0; border-radius: 12px; 
+            font-size: 14px; background: #FAFAFA; font-family: inherit; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        input:focus, textarea:focus, select:focus { 
+            border-color: var(--primary); 
+            background: #fff; 
+            box-shadow: 0 0 0 4px rgba(255, 36, 66, 0.05);
+            transform: translateY(-1px);
+        }
+        textarea { height: 140px; resize: vertical; line-height: 1.6; }
+
+        .range-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .range-label { font-size: 13px; color: #666; width: 64px; }
+        input[type="range"] { 
+            flex: 1; accent-color: var(--primary); height: 6px; cursor: pointer;
+        }
+        .range-val { font-size: 12px; font-weight: 700; color: var(--primary); width: 32px; text-align: right; }
+  
+        /* 恢复按钮悬浮效果 */
+        .reset-btn:hover { color: var(--primary) !important; transform: rotate(-45deg); }
+
+         /* 侧边栏底部按钮样式 */
+         .sidebar-footer {
+             padding: 20px;
+             border-top: 1px solid #EEE;
+             display: flex;
+             gap: 12px;
+             background: #fff;
+             margin-top: auto;
+         }
+         .btn-main {
+             flex: 1;
+             padding: 14px 0;
+             border-radius: 14px;
+             border: none;
+             font-weight: 700;
+             cursor: pointer;
+             font-size: 14px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             gap: 8px;
+             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+         }
+         .btn-refresh { background: #F3F4F6; color: #1A1A1A; }
+         .btn-refresh:hover { background: #E5E7EB; transform: translateY(-2px); }
+         .btn-dl { background: #1A1A1A; color: #fff; }
+         .btn-dl:hover { background: #000; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+        .preview-area {
+            flex: 1; background-color: #F8F9FB; background-image: radial-gradient(#E5E7EB 1.5px, transparent 1.5px); background-size: 30px 30px;
+            padding: 80px; overflow-y: auto; display: flex; flex-direction: column; gap: 40px;
+            align-items: center; scroll-behavior: smooth;
+        }
+        .preview-area.double-column {
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+        }
+
+        /* 右侧悬浮控制面板 - 靠近卡片 */
+        .right-panel {
+            position: fixed; 
+            top: 25%; 
+            right: 60px;
+            width: 300px; /* 增加宽度 */
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px);
+            border-radius: 20px; 
+            padding: 24px 20px; 
+            z-index: 100;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            border: 1px solid #EEE;
+            display: flex; flex-direction: column; gap: 18px; /* 减小间距，让垂直更紧凑 */
+            cursor: move; /* 提示可拖动 */
+            user-select: none;
+        }
+        
+        .right-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: -5px; /* 调整间距 */
+            pointer-events: none; 
+        }
+        
+        .drag-handle {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 20px;
+            cursor: move;
+            border-radius: 20px 20px 0 0;
+            background: rgba(0,0,0,0.02);
+        }
+        .drag-handle:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        
+        @media (max-width: 1400px) {
+            .right-panel {
+                right: 10px;
+                width: 240px; /* 响应式宽度也相应增加 */
+            }
+        }
+
+        /* 弹窗系统 - 确保默认隐藏 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+            opacity: 0; transition: all 0.3s ease;
+        }
+        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-content {
+            background: #fff; padding: 32px; border-radius: 24px; width: 360px;
+            max-height: 90vh; overflow-y: auto;
+            text-align: center; position: relative; transform: translateY(30px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+        .modal-overlay.show .modal-content { transform: translateY(0); }
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 24px; color: #CCC; cursor: pointer; transition: 0.2s; }
+        .modal-close:hover { color: #333; transform: rotate(90deg); }
+        .modal-title { font-size: 22px; font-weight: 900; margin-bottom: 12px; color: #1A1A1A; }
+        .modal-subtitle { font-size: 15px; color: #666; margin-bottom: 28px; line-height: 1.6; }
+        .modal-qr { 
+            width: 100%; 
+            max-width: 280px;
+            height: auto; 
+            border-radius: 12px; 
+            margin-bottom: 24px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1); 
+            border: 1px solid #F0F0F0; 
+            object-fit: contain;
+        }
+        .modal-wechat { 
+            background: #F7F8FA; padding: 16px; border-radius: 16px; font-family: 'Monaco', monospace;
+            font-size: 18px; font-weight: 800; color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 10px;
+            cursor: pointer; transition: all 0.2s; border: 1.5px dashed #E0E0E0;
+        }
+        .modal-wechat:hover { background: #FFF1F1; border-color: var(--primary); transform: translateY(-2px); }
+        .modal-wechat:active { transform: scale(0.98); }
+        .copy-hint { font-size: 12px; color: #999; margin-top: 12px; font-weight: 500; }
+
+        .right-panel .group-title { padding-bottom: 8px; font-size: 11px; }
+        .right-panel .range-wrap { gap: 8px; margin-bottom: 5px; }
+        .right-panel .range-label { width: auto; flex: 1; font-size: 12px; }
+        .right-panel .view-toggle-btn { margin-top: 5px; padding: 10px; font-size: 12px; }
+
+        .view-toggle-btn {
+            background: #fff;
+            border: 1.5px solid #EEE;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+        .view-toggle-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .view-toggle-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* ========= 卡片容器系统 ========= */
+        .card-container {
+            width: calc(var(--card-w) * var(--card-scale));
+            height: calc(var(--card-h) * var(--card-scale));
+            display: flex; justify-content: center; align-items: center;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        .card-wrapper {
+            width: var(--card-w); height: var(--card-h); flex-shrink: 0;
+            position: relative; display: flex; justify-content: center; align-items: center;
+            transform: scale(var(--card-scale));
+            transform-origin: center center;
+            animation: cardFadeIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: scale(calc(var(--card-scale) * 0.95)) translateY(20px); }
+            to { opacity: 1; transform: scale(var(--card-scale)) translateY(0); }
+        }
+
+        /* 1. 极光 (Aurora) */
+        .style-aurora.card-wrapper {
+            background-color: #F4F7FF;
+            background-image: 
+                radial-gradient(at top left, rgba(224, 195, 252, 0.6) 0%, transparent 50%),
+                radial-gradient(at top right, rgba(142, 197, 252, 0.6) 0%, transparent 50%),
+                radial-gradient(at bottom left, rgba(194, 233, 251, 0.6) 0%, transparent 50%),
+                radial-gradient(at bottom right, rgba(234, 221, 255, 0.6) 0%, transparent 50%);
+        }
+        .style-aurora .inner-card {
+            width: 94%; height: 96%; 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(10px); 
+            border: none; 
+            /* 🔴 [修改] 极光卡片阴影调整，避免导出发黑 */
+            box-shadow: 0 5px 15px 0 rgba(31, 38, 135, 0.08); 
+            border-radius: var(--card-radius);
+        }
+        /* 极光模式封面样式 - 保持较宽边框 */
+        .style-aurora .inner-card.is-cover { width: 90%; height: 92%; }
+        
+        /* 🔴 [修改] 极光模式加粗文字颜色 */
+        .style-aurora .markdown-content strong {
+            color: #1855D0;
+        }
+
+        /* 2. 清新 (Fresh) */
+        .style-fresh.card-wrapper { background: var(--bg-fresh); }
+        .style-fresh .inner-card { width: 94%; height: 96%; background: #ffffff; border-radius: var(--card-radius); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15); }
+        /* 清新模式封面样式 - 与极光模式一样宽 */
+        .style-fresh .inner-card.is-cover { width: 90%; height: 92%; }
+
+        /* 3. 浪漫 (Romantic) */
+        .style-romantic.card-wrapper { background: var(--bg-romantic); }
+        .style-romantic .inner-card { 
+            width: 94%; height: 96%; 
+            background: rgba(255, 255, 255, 0.85); 
+            border-radius: 16px; 
+            border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 10px 30px rgba(186, 174, 226, 0.2); 
+            backdrop-filter: blur(10px); 
+        }
+        /* 浪漫模式封面样式 - 与极光模式一样宽 */
+        .style-romantic .inner-card.is-cover { width: 90%; height: 92%; }
+
+        /* 4. 国潮 (Chinese) */
+        /* 🔴 [修改] 国潮模式：增强视觉效果，使用传统中国色彩和纹理 */
+        .style-chinese.card-wrapper { 
+            background: var(--bg-chinese);
+            position: relative;
+        }
+        /* 添加传统纹理背景 */
+        .style-chinese.card-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9ad86' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+            z-index: 0;
+        }
+        .style-chinese .inner-card { 
+            width: 96%; /* 🔴 缩小边框，增加内部宽度 */
+            height: 96%; /* 🔴 缩小边框，增加内部高度 */
+            background-color: #FFF8ED; 
+            /* 宣纸纹理效果 */
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(205, 162, 102, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 80% 70%, rgba(205, 162, 102, 0.05) 0%, transparent 20%),
+                linear-gradient(rgba(205, 162, 102, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(205, 162, 102, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 20px 20px, 20px 20px;
+            /* 移除圆角，改为方正设计 */
+            border-radius: 2px;
+            /* 简化阴影效果，移除边框 */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            /* 移除边框 */
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 国潮模式加粗文字颜色 */
+        .style-chinese .markdown-content strong {
+            color: #8D2828;
+            font-weight: 700;
+        }
+        /* 国潮模式封面样式 - 与极光、清新一致 */
+        .style-chinese .inner-card.is-cover { width: 90%; height: 92%; }
+        /* 国潮模式标题颜色 */
+        .style-chinese .title {
+            color: #8D2828;
+        }
+
+        .style-novel.card-wrapper { background: #DEDBD3; }
+        .style-novel .inner-card { width: 94%; height: 96%; background-color: #FFFBF0; background-image: linear-gradient(to right, #E0Ddd5 0%, #FFFBF0 5%, #FFFBF0 100%); border-radius: 2px; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); padding-left: 45px !important; }
+        .style-novel .inner-card::before { content: ''; position: absolute; top: 0; left: 20px; width: 1px; height: 100%; border-left: 1px dashed #C4BCAF; }
+
+        .style-journal.card-wrapper { background: #f0f0f0; }
+        .style-journal .inner-card { width: 92%; height: 94%; background: #fff; background-image: linear-gradient(#e1f5fe 1px, transparent 1px), linear-gradient(90deg, #e1f5fe 1px, transparent 1px); background-size: 20px 20px; border-radius: 10px; box-shadow: 5px 5px 15px rgba(0,0,0,0.05); overflow: visible; }
+        .style-journal .inner-card::before { content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%) rotate(-2deg); width: 120px; height: 35px; background: rgba(255, 235, 59, 0.8); box-shadow: 0 2px 5px rgba(0,0,0,0.1); opacity: 0.9; z-index: 2; mask-image: radial-gradient(circle, transparent 2px, black 2.5px); }
+
+        .style-matcha.card-wrapper { background: var(--bg-matcha); }
+        .style-matcha .inner-card { width: 90%; height: 92%; background: rgba(255,255,255,0.95); border-radius: 24px; box-shadow: 0 15px 35px rgba(76, 175, 80, 0.2); overflow: hidden; }
+        .style-matcha .deco-circle { position: absolute; border-radius: 50%; background: #A5D6A7; opacity: 0.2; }
+
+        .style-simple.card-wrapper { background: transparent; }
+        .style-simple .inner-card { width: 100%; height: 100%; background: #fff; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+
+        .style-portrait.card-wrapper { background: #000; }
+        .style-portrait .inner-card { width: 90%; height: 92%; background: rgba(255,255,255,0.75); backdrop-filter: blur(20px); border-radius: 16px; }
+        .style-portrait .inner-card.is-cover {
+            width: 100%; height: 100%; border-radius: 0;
+            background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%), var(--portrait-bg); 
+            background-size: cover; background-position: center; color: white; text-shadow: 0 4px 15px rgba(0,0,0,0.9);
+        }
+
+        /* === 通用布局 === */
+        .inner-card { display: flex; flex-direction: column; padding: 32px; position: relative; }
+
+        /* 封面布局 */
+        .inner-card.is-cover { padding: 40px; text-align: var(--cover-text-align); font-family: var(--font-cover); }
+        .cover-layout { height: 100%; display: flex; flex-direction: column; }
+        /* 确保无封面图片时文字上下居中 */
+        .inner-card.is-cover:not(.style-portrait) .cover-center {
+            justify-content: center !important;
+        }
+        /* 封面图片存在时靠上对齐 */
+        .inner-card.is-cover:not(.style-portrait) .cover-center.has-image {
+            justify-content: flex-start !important;
+        }
+        .cover-center { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; width: 100%; padding-bottom: 60px; overflow: hidden; align-items: var(--cover-align-items); min-height: 0; }
+        
+            /* 封面插图 */
+        .cover-image-inset {
+            width: 100%;
+            aspect-ratio: var(--img-aspect);
+            object-fit: var(--img-fit);
+            margin: 15px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 16px !important; 
+            width: auto; 
+            max-width: 100%; 
+            max-height: 320px; /* 增加最大高度，从200px增加到320px */
+        }
+        .style-romantic .cover-image-inset { border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.06); padding: 0; }
+        
+        .style-journal .cover-image-inset { transform: rotate(-2deg); border: 4px solid #fff; border-radius: 16px !important;}
+        .style-chinese .cover-image-inset { border-radius: 16px !important; padding: 0; border: 1px solid #D4B483; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .style-novel .cover-image-inset { filter: sepia(0.3); border: 1px solid #8D6E63; border-radius: 16px !important;}
+
+        /* 封面标题 */
+        .cover-title {
+            font-size: calc(36px * var(--cover-scale)); font-weight: 900; line-height: 1.25; margin: 10px 0; width: 100%; white-space: pre-wrap;
+            color: var(--title-color, #000000); /* 使用CSS变量，默认黑色 */
+            background-image: var(--title-gradient, none);
+            -webkit-background-clip: var(--title-clip, border-box);
+            background-clip: var(--title-clip, border-box);
+            -webkit-text-fill-color: var(--title-text-fill, currentColor);
+            min-height: 1em;
+            flex-shrink: 0;
+            /* 添加渐变文字导出兼容 */
+            display: inline-block;
+            width: 100%;
+        }
+        /* 主题默认标题样式 */
+        .style-aurora .cover-title.default-gradient,
+        .style-journal .cover-title.default-gradient,
+        .style-romantic .cover-title.default-gradient {
+            /* 使用CSS变量控制样式，默认黑色 */
+            background-image: var(--title-gradient, none);
+            -webkit-background-clip: var(--title-clip, border-box);
+            background-clip: var(--title-clip, border-box);
+            -webkit-text-fill-color: var(--title-text-fill, currentColor);
+        }
+        /* 国潮风格默认标题颜色：使用柔和的红色，可调整 */
+        .style-chinese .cover-title.default-gradient {
+            /* 使用CSS变量控制样式，允许用户调整 */
+            background-image: var(--title-gradient, none);
+            -webkit-background-clip: var(--title-clip, border-box);
+            background-clip: var(--title-clip, border-box);
+            -webkit-text-fill-color: var(--title-text-fill, currentColor);
+            color: var(--title-color, #8D2828);
+        }
+        /* 清新风格默认标题颜色：使用第六个渐变色（清新蓝） */
+        .style-fresh .cover-title.default-gradient {
+            /* 使用CSS变量控制样式，允许用户调整 */
+            background-image: var(--title-gradient, linear-gradient(180deg, #2980b9 0%, #73c8a9 100%));
+            -webkit-background-clip: var(--title-clip, text);
+            background-clip: var(--title-clip, text);
+            -webkit-text-fill-color: var(--title-text-fill, transparent);
+            color: var(--title-color, transparent);
+        }
+        /* 调整图片在文字下方时的封面排版 - 修复文字放大挤压图片问题 */
+        .cover-center.bottom-image {
+            justify-content: flex-start !important;
+            padding-top: 10px;
+            padding-bottom: 60px;
+            flex-direction: column;
+        }
+        /* 确保标题放大时向上扩展，不挤压图片 */
+        .cover-center.bottom-image .cover-title {
+            margin-bottom: auto;
+        }
+        /* 浪漫模式下副标题设置 */
+        .style-romantic .cover-sub {
+            color: #000000;
+        }
+        .cover-sub { font-size: 16px; color: #333; line-height: 1.6; white-space: pre-wrap; width: 100%; }
+        /* 浪漫模式副标题适配中等背景 */
+        .style-romantic .cover-sub { color: #000000; }
+
+        .issue-tag { font-size: 10px; letter-spacing: 2px; color: #999; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; text-transform: uppercase; width: 100%; }
+        
+        /* 封面页脚 */
+        .cover-footer { 
+            position: absolute; bottom: 30px; left: 40px; right: 40px;
+            display: flex; justify-content: space-between; font-size: 12px; color: #aaa; 
+            border-top: 1px solid #eee; padding-top: 15px; align-items: center; letter-spacing: 1px; 
+            height: 40px;
+        }
+        .style-romantic .cover-footer { border-top-color: rgba(0,0,0,0.05); color: #9FA8DA; }
+
+        /* 正文布局 */
+        .content-body { 
+            flex: 1; overflow: hidden; display: flex; flex-direction: column; 
+            padding-bottom: 30px;
+        }
+        .markdown-content { color: var(--content-text-color); line-height: 1.6; }
+        /* 标题层级 H1 > H2 > H3 */
+        .markdown-content h1 { 
+            font-family: var(--font-content-head); 
+            font-size: calc(1.6em * var(--content-scale)); 
+            margin: 0.5em 0 0.3em; color: var(--content-head-color); font-weight: 800; 
+        }
+        .markdown-content h2 { 
+            font-family: var(--font-content-head); 
+            font-size: calc(1.3em * var(--content-scale)); 
+            margin: 0.5em 0 0.3em; color: var(--content-head-color); font-weight: 800; 
+        }
+        .markdown-content h3 { 
+            font-family: var(--font-content-head); 
+            font-size: calc(1.1em * var(--content-scale)); 
+            margin: 0.5em 0 0.3em; color: var(--content-head-color); font-weight: 700; 
+        }
+        .markdown-content p, .markdown-content li { font-family: var(--font-content-body); font-size: var(--body-size); margin-bottom: 0.5em; text-align: justify; }
+        .markdown-content ul { padding-left: 1.2em; margin-bottom: 0.5em; }
+        .markdown-content strong { color: var(--strong-color); font-weight: 800; }
+        
+        /* 浪漫模式正文颜色 */
+        .style-romantic .markdown-content { color: var(--content-text-color); }
+
+        /* 正文图片 */
+        .img-container { margin: 15px 0; text-align: center; position: relative; }
+        /* [修改] 限制图片最大高度 */
+        .img-container img {
+            max-width: 100%;
+            max-height: 320px; /* 限制高度，防止一张图占满整个卡片导致溢出 */
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+        .style-aurora .img-container img, .style-fresh .img-container img, .style-romantic .img-container img, .style-matcha .img-container img { border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .style-journal .img-container img { transform: rotate(1deg); border: 5px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .style-chinese .img-container img { border: 1px solid #D4B483; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 0; }
+        .style-novel .img-container img { filter: sepia(0.2); }
+
+        .content-footer {
+            margin-top: auto; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; font-size: 12px; color: #888; align-items: center;
+            flex-shrink: 0; background: transparent; letter-spacing: 2px;
+            position: relative; z-index: 10;
+        }
+        .style-romantic .content-footer { border-top-color: rgba(0,0,0,0.05); color: #9FA8DA; }
+        .footer-left { font-weight: bold; color: #666; margin-right: 30px; letter-spacing: 2px; }
+
+        /* 人像风格 */
+        .style-portrait .cover-layout { justify-content: center; }
+        .style-portrait .cover-center { flex: 1; justify-content: center; align-items: center; text-align: center; padding-bottom: 0; }
+        .style-portrait .cover-title { color: #fff; text-align: center; margin-bottom: 15px; -webkit-text-fill-color: white; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        .style-portrait .cover-sub { color: rgba(255,255,255,0.9); text-align: center; }
+        .style-portrait .cover-footer, .style-portrait .issue-tag, .style-portrait .cover-image-inset { display: none; }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; overflow: auto; height: auto; }
+            .sidebar { width: 100%; height: auto; }
+            .card-wrapper { transform: scale(0.7); margin-bottom: -130px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-resizer" id="sidebarResizer"></div>
+        <div class="sidebar-header">
+            <div class="logo">REDNOTE <span>PRO</span></div>
+        </div>
+        
+        <div class="sidebar-content">
+            <div>
+                <div class="group-title"><i class="ph-duotone ph-palette"></i> 风格选择 / Style</div>
+                <div class="style-grid">
+                    <div class="style-btn btn-aurora" onclick="setStyle('style-aurora', '#0056FF', this)">
+                        <span>极光</span>
+                    </div>
+                    <div class="style-btn btn-fresh" onclick="setStyle('style-fresh', '#0277BD', this)">
+                        <span>清新</span>
+                    </div>
+                    <div class="style-btn btn-chinese" onclick="setStyle('style-chinese', '#8D2828', this)">
+                        <span>国潮</span>
+                    </div>
+                    
+                    <div class="style-btn btn-journal" onclick="setStyle('style-journal', '#F57F17', this)">
+                        <span>手帐</span>
+                    </div>
+                    <div class="style-btn btn-novel" onclick="setStyle('style-novel', '#5D4037', this)">
+                        <span>小说</span>
+                    </div>
+                    <div class="style-btn btn-matcha" onclick="setStyle('style-matcha', '#388E3C', this)">
+                        <span>抹茶</span>
+                    </div>
+
+                    <div class="style-btn btn-romantic" onclick="setStyle('style-romantic', '#2b53c9', this)">
+                        <span>浪漫</span>
+                    </div>
+                    <div class="style-btn btn-simple" onclick="setStyle('style-simple', '#FF2442', this)">
+                        <span>极简</span>
+                    </div>
+                    <div class="style-btn btn-portrait" onclick="setStyle('style-portrait', '#fff', this)">
+                        <span>人像</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="group-title" onclick="toggleFontSettings()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="ph-duotone ph-text-t"></i> 字体设置 / Fonts</span>
+                    <span id="fontSettingsToggle"><i class="ph ph-caret-down"></i></span>
+                </div>
+                <div id="fontSettingsContainer" style="display:none;">
+                    <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;margin-top:5px;">封面字体</label>
+                    <select id="fontCoverSelect" onchange="render()" style="margin-bottom:8px;">
+                        <option value="'Noto Serif SC', serif" selected>思源宋体 (默认)</option>
+                        <option value="'PingFang SC', sans-serif">标准黑体</option>
+                        <option value="'KaiTi', 'STKaiti', serif">系统楷体</option>
+                        <option value="'LXGW WenKai Screen', sans-serif">霞鹜文楷</option>
+                        <option value="'Ma Shan Zheng', cursive">马善政书法</option>
+                        <option value="'ZCOOL XiaoWei', serif">站酷小薇</option>
+                    </select>
+
+                    <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">正文标题</label>
+                    <select id="fontHeadSelect" onchange="render()" style="margin-bottom:8px;">
+                        <option value="'Noto Serif SC', serif" selected>思源宋体</option>
+                        <option value="'PingFang SC', sans-serif">标准黑体</option>
+                        <option value="'KaiTi', 'STKaiti', serif">系统楷体</option>
+                        <option value="'LXGW WenKai Screen', sans-serif">霞鹜文楷</option>
+                    </select>
+
+                    <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">正文内容</label>
+                    <select id="fontBodySelect" onchange="render()" style="margin-bottom:12px;">
+                        <option value="'PingFang SC', sans-serif" selected>标准黑体 (默认)</option>
+                        <option value="'Noto Serif SC', serif">思源宋体</option>
+                        <option value="'KaiTi', 'STKaiti', serif">系统楷体</option>
+                        <option value="'LXGW WenKai Screen', sans-serif">霞鹜文楷</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 正文颜色设置 -->
+            <div>
+                <div class="group-title" onclick="toggleContentColors()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="ph-duotone ph-swatches"></i> 正文颜色 / Colors</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button onclick="resetContentColors(event)" title="恢复默认颜色" class="reset-btn" style="background:none; border:none; color:#AAA; cursor:pointer; font-size:14px; padding:2px; display:flex; align-items:center; transition:all 0.3s;"><i class="ph ph-arrow-counter-clockwise"></i></button>
+                        <span id="contentColorsToggle"><i class="ph ph-caret-down"></i></span>
+                    </div>
+                </div>
+                <div id="contentColorsContainer" style="display:none;">
+                    <div style="display:flex; gap:8px; margin-top:5px;">
+                        <div style="flex:1; text-align:center;">
+                            <label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">标题</label>
+                            <div style="display:flex; align-items:center; gap:4px; justify-content:center;">
+                                <input type="color" id="contentHeadColor" value="#000000" onchange="updateContentHeadColor()" style="width:28px; height:28px; padding:0; border:1px solid #ddd; cursor:pointer; border-radius:4px;">
+                            </div>
+                        </div>
+                        <div style="flex:1; text-align:center;">
+                            <label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">正文</label>
+                            <div style="display:flex; align-items:center; gap:4px; justify-content:center;">
+                                <input type="color" id="contentTextColor" value="#000000" onchange="updateContentTextColor()" style="width:28px; height:28px; padding:0; border:1px solid #ddd; cursor:pointer; border-radius:4px;">
+                            </div>
+                        </div>
+                        <div style="flex:1; text-align:center;">
+                            <label style="font-size:11px;color:#666;display:block;margin-bottom:4px;">加粗</label>
+                            <div style="display:flex; align-items:center; gap:4px; justify-content:center;">
+                                <input type="color" id="contentStrongColor" value="#2b53c9" onchange="updateContentStrongColor()" style="width:28px; height:28px; padding:0; border:1px solid #ddd; cursor:pointer; border-radius:4px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 排版细节移至右侧悬浮窗，这里保留关键拉杆 -->
+            <div>
+                <div class="group-title" onclick="toggleLayoutSettings()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="ph-duotone ph-text-aa"></i> 标题正文细节 / Details</span>
+                    <span id="layoutSettingsToggle"><i class="ph ph-caret-up"></i></span>
+                </div>
+                <div id="layoutSettingsContainer" style="display:block;margin-top:5px;">
+                    <div class="range-wrap">
+                        <span class="range-label">封面标题</span>
+                        <input type="range" id="coverScale" min="0.8" max="2.0" step="0.1" value="1.0" oninput="updateParams()">
+                        <span class="range-val" id="cvVal">1.0</span>
+                    </div>
+                    <div class="range-wrap">
+                        <span class="range-label">正文标题</span>
+                        <input type="range" id="contentScale" min="0.8" max="1.5" step="0.1" value="1.0" oninput="updateParams()">
+                        <span class="range-val" id="ctVal">1.0</span>
+                    </div>
+                    <div class="range-wrap">
+                        <span class="range-label">正文大小</span>
+                        <input type="range" id="bodySize" min="12" max="24" value="16" oninput="updateParams()">
+                        <span class="range-val" id="bsVal">16</span>
+                    </div>
+                    <div class="range-wrap">
+                        <span class="range-label">文字密度</span>
+                        <input type="range" id="density" min="100" max="600" value="200" oninput="updateParams()">
+                        <span class="range-val" id="dsVal">200</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="group-title" onclick="toggleCoverSettings()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="ph-duotone ph-image"></i> 封面设置 / Cover</span>
+                    <span id="coverSettingsToggle"><i class="ph ph-caret-down"></i></span>
+                </div>
+                <div id="coverSettingsContainer" style="display:none;">
+                
+                <div style="background:#f9f9f9; padding:10px; border-radius:8px; border:1px dashed #ddd; margin-bottom:10px;margin-top:5px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <div style="font-size:12px; color:#666;">插图 / 背景图</div>
+                        <button onclick="removeCoverImage()" style="font-size:12px; padding:2px 6px; border:none; background:#eee; border-radius:4px; cursor:pointer; color:red;">🗑️ 删除</button>
+                    </div>
+                    <input type="file" id="coverImageUpload" accept="image/*" style="width:100%; margin-bottom:8px;">
+                    
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <label style="font-size:12px; color:#666; display:flex; align-items:center; justify-content:space-between;">
+                            <span>图片比例:</span>
+                            <select id="imgRatioSelect" onchange="updateParams()" style="width:60%; padding:4px;">
+                                <option value="auto">原始比例 (完整)</option>
+                                <option value="1 / 1">1:1 正方形 (填充)</option>
+                                <option value="4 / 3">4:3 标准 (填充)</option>
+                                <option value="16 / 9">16:9 宽屏 (填充)</option>
+                            </select>
+                        </label>
+                        
+                        <label style="font-size:12px; color:#666; display:flex; align-items:center; justify-content:space-between;">
+                            <span>显示位置:</span>
+                            <select id="imgPosSelect" onchange="render()" style="width:60%; padding:4px;">
+                                <option value="top">标题上方 (默认)</option>
+                                <option value="bottom">文字下方</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:12px; color:#666; margin-bottom:5px;">封面布局</div>
+                    <div class="align-group">
+                        <button class="align-btn" onclick="setAlign('left')">⬅️ 左对齐</button>
+                        <button class="align-btn active" onclick="setAlign('center')">⏺ 居中</button>
+                        <button class="align-btn" onclick="setAlign('right')">➡️ 右对齐</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:12px; color:#666; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>标题色彩</span>
+                        <div style="display:flex; gap:5px;">
+                            <input type="color" id="titleColorPicker" value="#000000" onchange="updateTitleColor('solid')" style="width:24px; height:24px; padding:0; border:none; cursor:pointer; border-radius:4px;">
+                            <button onclick="togglePalette()" style="font-size:12px; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; padding:2px 6px;">🎨 预设</button>
+                            <button onclick="addColorPreset()" style="font-size:12px; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; padding:2px 6px;">➕ 添加</button>
+                            <button onclick="updateTitleColor('reset')" style="font-size:12px; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; padding:2px 6px;">↺</button>
+                        </div>
+                    </div>
+                    <div class="palette-container" id="paletteContainer">
+                        <div id="colorPalette" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+                        <div style="margin-top:8px; font-size:11px; color:#999;">点击颜色可应用，右键点击可删除</div>
+                    </div>
+                </div>
+                
+                <!-- 不同样式导出时的标题色彩设置 -->
+                <div style="margin-bottom:10px;">
+                    <div class="group-title" onclick="toggleStyleColors()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="ph-duotone ph-palette"></i> 导出色彩 / Export</span>
+                        <span id="styleColorsToggle"><i class="ph ph-caret-down"></i></span>
+                    </div>
+                    <div id="styleColorsContainer" style="display:none;">
+                        <div style="font-size:11px; color:#999; margin-bottom:8px;">设置不同样式导出时的默认标题色彩</div>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <!-- 极光样式 -->
+                            <div>
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <label style="font-size:12px; color:#666; display:flex; align-items:center; gap:5px;">
+                                        <span style="width:60px;">极光样式</span>
+                                        <input type="color" id="auroraTitleColor" value="#4d91ea" style="width:24px; height:24px; padding:0; border:none; cursor:pointer; border-radius:4px;">
+                                    </label>
+                                </div>
+                                <div class="palette-container" id="auroraPalette" style="margin-left:65px; margin-bottom:8px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+                            </div>
+                            <!-- 清新样式 -->
+                            <div>
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <label style="font-size:12px; color:#666; display:flex; align-items:center; gap:5px;">
+                                        <span style="width:60px;">清新样式</span>
+                                        <input type="color" id="freshTitleColor" value="#4d91ea" style="width:24px; height:24px; padding:0; border:none; cursor:pointer; border-radius:4px;">
+                                    </label>
+                                </div>
+                                <div class="palette-container" id="freshPalette" style="margin-left:65px; margin-bottom:8px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+                            </div>
+                            <!-- 浪漫样式 -->
+                            <div>
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <label style="font-size:12px; color:#666; display:flex; align-items:center; gap:5px;">
+                                        <span style="width:60px;">浪漫样式</span>
+                                        <input type="color" id="romanticTitleColor" value="#2b53c9" style="width:24px; height:24px; padding:0; border:none; cursor:pointer; border-radius:4px;">
+                                    </label>
+                                </div>
+                                <div class="palette-container" id="romanticPalette" style="margin-left:65px; margin-bottom:8px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+                            </div>
+                            <!-- 国潮样式 -->
+                            <div>
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <label style="font-size:12px; color:#666; display:flex; align-items:center; gap:5px;">
+                                        <span style="width:60px;">国潮样式</span>
+                                        <input type="color" id="chineseTitleColor" value="#8D2828" style="width:24px; height:24px; padding:0; border:none; cursor:pointer; border-radius:4px;">
+                                    </label>
+                                </div>
+                                <div class="palette-container" id="chinesePalette" style="margin-left:65px; margin-bottom:8px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                
+                <!-- 以下内容不折叠 -->
+                <div style="display:flex; align-items:center; gap:5px; margin-bottom:8px; font-size:12px;">
+                    <input type="checkbox" id="showIssue" onchange="render()" style="width:auto;"> 显示刊号 (默认关)
+                </div>
+                <div style="display:flex; gap:5px;">
+                     <input type="text" id="issueText" value="VOL.01 | 2025" placeholder="刊号" style="font-family:monospace; margin-bottom:8px;">
+                     <input type="text" id="coverFooterRight" value="" placeholder="右下角文字(默认空)" style="margin-bottom:8px;">
+                </div>
+                <textarea id="mainTitle" placeholder="大标题" style="height:60px; font-weight:bold; margin-bottom:8px;">RedNote Pro</textarea>
+                <textarea id="subTitle" placeholder="副标题" style="height:50px;">细节质感精修版使用手册</textarea>
+            </div>
+            <div>
+                <div class="group-title"><i class="ph-duotone ph-article"></i> 正文内容 / Content</div>
+                <div style="margin-bottom: 8px; display: flex; gap: 8px;">
+                    <button onclick="document.getElementById('bodyImageUpload').click()" class="view-toggle-btn" style="width: auto; flex: 1; padding: 6px 12px; font-size: 12px; border-style: dashed;">
+                        <i class="ph-duotone ph-image-square"></i> 插入图片 (支持本地上传)
+                    </button>
+                    <input type="file" id="bodyImageUpload" accept="image/*" style="display:none;" onchange="insertBodyImage(this)">
+                </div>
+                <textarea id="bodyText" style="height:150px; max-width:100%;" placeholder="在此输入正文..." oninput="render()"># RedNote Pro 使用指南
+
+## 核心功能介绍
+RedNote Pro 是一款专为自媒体创作者设计的**细节质感卡片生成器**。它能帮助您快速将文字转化为精美的小红书风格分享图。
+
+### 1. 多样化风格选择
+- **极光 & 浪漫**：适合情感、文学类内容。
+- **国潮 & 小说**：传承经典，极具东方韵味。
+- **清新 & 抹茶**：生活方式、科普干货的首选。
+
+### 2. 高度自定义排版
+您可以实时调整以下参数：
+*   **字体设置**：支持思源宋体、霞鹜文楷等多种精选字体。
+*   **色彩细节**：从标题到正文，每一处颜色都可自由定义。
+*   **视图控制**：右侧悬浮面板支持自由拖拽、卡片缩放及单双栏切换。
+
+  ![WechatIMG20.jpeg](https://pic-1314100616.cos.ap-nanjing.myqcloud.com/img/WechatIMG20.jpeg)
+
+---
+链接作者若轩老师获得更多帮助</textarea>
+                <div id="localImageGallery" style="margin-top: 10px; display: none; flex-wrap: wrap; gap: 8px; padding: 10px; background: #F9F9F9; border-radius: 8px; border: 1px solid #EEE;"></div>
+                <div style="margin-top:10px;">
+                    <input type="text" id="footerText" value="轩辕姓名" placeholder="作者署名">
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="btn-main btn-refresh" onclick="render()">🔄 刷新</button>
+            <button class="btn-main btn-dl" id="dlBtn" onclick="downloadAll()">⬇️ 下载 ZIP</button>
+        </div>
+        <div style="padding: 0 20px 20px;">
+            <button class="contact-btn" onclick="toggleModal(true)">
+                <i class="ph-duotone ph-chat-circle-dots"></i>
+                <span>联系作者</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="right-panel" id="rightPanel">
+        <div class="drag-handle" id="rightPanelHandle"></div>
+        <div class="group-title"><i class="ph-duotone ph-monitor"></i> 视图控制 / View</div>
+        <div class="range-wrap">
+            <span class="range-label">卡片缩放</span>
+            <input type="range" id="cardZoom" min="0.4" max="1.5" step="0.05" value="1.0" oninput="updateParams()">
+            <span class="range-val" id="czVal">100%</span>
+        </div>
+        <button class="view-toggle-btn" id="columnToggle" onclick="toggleColumns()">
+            <i class="ph-duotone ph-columns"></i>
+            <span>切换双栏</span>
+        </button>
+    </div>
+
+    <div class="preview-area" id="previewArea"></div>
+
+    <!-- 联系作者弹窗 -->
+    <div class="modal-overlay" id="contactModal" onclick="if(event.target===this) toggleModal(false)">
+        <div class="modal-content">
+            <div class="modal-close" onclick="toggleModal(false)"><i class="ph ph-x"></i></div>
+            <div class="modal-title">联系若轩老师</div>
+            <div class="modal-subtitle">点击下方微信号即可快速复制，添加老师咨询</div>
+            
+            <div class="modal-wechat" onclick="copyWeChat()">
+                <i class="ph-duotone ph-copy"></i>
+                <span id="wechatId">fashou789</span>
+            </div>
+            <div class="copy-hint">微信号：fashou789</div>
+        </div>
+    </div>
+
+    <div style="display:none;">
+        <svg id="icon-diamond" viewBox="0 0 24 24"><path d="M19,3H5C3.9,3,3,3.9,3,5v14c0,1.1,0.9,2,2,2h14c1.1,0,2-0.9,2-2V5C21,3.9,20.1,3,19,3z M12,16l-4-4l4-4l4,4L12,16z"/></svg>
+    </div>
+
+    <script>
+        let currentStyle = 'style-aurora';
+        let currentStrongColor = '#6200EE';
+        let uploadedCoverImage = null;
+        
+        // 用于存储正文本地图片的映射表，防止正文框显示超长代码
+        let bodyImageMap = {};
+        let bodyImageCounter = 1;
+
+        // 侧边栏调整宽度逻辑
+        const sidebar = document.querySelector('.sidebar');
+        const resizer = document.getElementById('sidebarResizer');
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizer.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', stopResizing);
+        });
+
+        function handleMouseMove(e) {
+            if (!isResizing) return;
+            const newWidth = Math.max(260, Math.min(600, e.clientX));
+            document.documentElement.style.setProperty('--sidebar-w', newWidth + 'px');
+        }
+
+        function stopResizing() {
+            isResizing = false;
+            resizer.classList.remove('resizing');
+            document.body.style.cursor = 'default';
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', stopResizing);
+        }
+
+        // 右侧面板拖拽逻辑
+        const rightPanel = document.getElementById('rightPanel');
+        const dragHandle = document.getElementById('rightPanelHandle');
+        let isDragging = false;
+        let startX, startY, initialX, initialY, offsetX, offsetY;
+
+        dragHandle.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = rightPanel.offsetLeft;
+            initialY = rightPanel.offsetTop;
+            
+            // 记录相对于面板左上角的偏移，防止突跳
+            const rect = rightPanel.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            document.addEventListener('mousemove', handleDrag);
+            document.addEventListener('mouseup', stopDragging);
+        });
+
+        function handleDrag(e) {
+            if (!isDragging) return;
+            const x = e.clientX - offsetX;
+            const y = e.clientY - offsetY;
+            rightPanel.style.left = x + 'px';
+            rightPanel.style.top = y + 'px';
+            rightPanel.style.right = 'auto'; 
+            rightPanel.style.bottom = 'auto';
+            rightPanel.style.transform = 'none'; // 移除可能存在的 transform
+        }
+
+        function stopDragging() {
+            isDragging = false;
+            document.removeEventListener('mousemove', handleDrag);
+            document.removeEventListener('mouseup', stopDragging);
+        }
+
+        // 视图切换控制
+        function toggleColumns() {
+            const previewArea = document.getElementById('previewArea');
+            const toggleBtn = document.getElementById('columnToggle');
+            const isDouble = previewArea.classList.toggle('double-column');
+            
+            toggleBtn.classList.toggle('active', isDouble);
+            toggleBtn.querySelector('span').innerText = isDouble ? '切换单栏显示' : '切换双栏显示';
+            toggleBtn.querySelector('i').className = isDouble ? 'ph-duotone ph-rows' : 'ph-duotone ph-columns';
+        }
+
+        // 弹窗控制
+        function toggleModal(show) {
+            const modal = document.getElementById('contactModal');
+            if (show) {
+                modal.classList.add('show');
+            } else {
+                modal.classList.remove('show');
+            }
+        }
+
+        // 复制微信号
+        function copyWeChat() {
+            const wechatId = document.getElementById('wechatId').innerText;
+            navigator.clipboard.writeText(wechatId).then(() => {
+                const hint = document.querySelector('.copy-hint');
+                const oldText = hint.innerText;
+                hint.innerText = '✅ 已复制到剪贴板';
+                hint.style.color = '#4CAF50';
+                setTimeout(() => {
+                    hint.innerText = oldText;
+                    hint.style.color = '#999';
+                }, 2000);
+            });
+        }
+
+        // 插入正文图片功能 (优化版：使用占位符，防止正文框出现长代码)
+        function insertBodyImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                const imgId = `IMG_${bodyImageCounter++}`;
+                
+                // 将数据存入映射表
+                bodyImageMap[imgId] = base64;
+                
+                const textarea = document.getElementById('bodyText');
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const text = textarea.value;
+                
+                // 构造简洁的占位符：![文件名](编号)
+                const imageMarkdown = `\n\n![${file.name}](${imgId})\n\n`;
+                
+                // 在光标位置插入占位符
+                textarea.value = text.substring(0, start) + imageMarkdown + text.substring(end);
+                
+                // 重置文件选择器
+                input.value = '';
+                
+                // 更新图片库预览
+                updateImageGallery();
+                // 触发渲染
+                render();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 更新本地图片库预览
+        function updateImageGallery() {
+            const gallery = document.getElementById('localImageGallery');
+            const ids = Object.keys(bodyImageMap);
+            
+            if (ids.length === 0) {
+                gallery.style.display = 'none';
+                return;
+            }
+            
+            gallery.style.display = 'flex';
+            gallery.innerHTML = '<div style="width: 100%; font-size: 11px; color: #999; margin-bottom: 5px;">本地图片预览 (对应正文编号)：</div>';
+            
+            ids.forEach(id => {
+                const item = document.createElement('div');
+                item.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:4px;';
+                item.innerHTML = `
+                    <img src="${bodyImageMap[id]}" style="width:50px; height:50px; object-fit:cover; border-radius:4px; border:1px solid #DDD;">
+                    <span style="font-size:10px; color:var(--primary); font-weight:bold;">${id}</span>
+                `;
+                gallery.appendChild(item);
+            });
+        }
+
+        // 默认演示图片
+        const defaultCoverImg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop";
+
+        const colorPresets = [
+            { type: 'solid', value: '#000000' }, // 纯黑色
+            { type: 'solid', value: '#2c3e50' },
+            { type: 'solid', value: '#5D4037' },
+            { type: 'solid', value: '#1E8449' },
+            { type: 'solid', value: '#8E44AD' },
+            { type: 'solid', value: '#a998e2' },
+            { type: 'solid', value: '#d99fe9' },
+            { type: 'solid', value: '#bd8b70' },
+            { type: 'solid', value: '#8cb2df' },
+            { type: 'solid', value: '#C0392B' },
+            { type: 'solid', value: '#5e90e4' }, // 指定颜色
+            
+            // 清新蓝 (Fresh Match)
+            { type: 'gradient', value: 'linear-gradient(180deg, #2980b9 0%, #73c8a9 100%)' },
+            // 国风红 (Chinese Match)
+            { type: 'gradient', value: 'linear-gradient(to right, #D31027, #8B0000)' },
+            // 墨韵 (Ink)
+            { type: 'gradient', value: 'linear-gradient(135deg, #232526 0%, #414345 100%)' },
+            // 国潮红金渐变 (Chinese Red-Gold) - 调整为更偏红的国潮风格
+            { type: 'gradient', value: 'linear-gradient(135deg, #8B0000 0%, #A52A2A 50%, #CD5C5C 100%)' },
+            
+            // 浪漫模式专用：粉色到淡紫色的渐变
+            { type: 'gradient', value: 'linear-gradient(180deg, #E084A6 0%, #9FA8DA 100%)' }
+        ];
+
+        const renderer = {
+            image(href, title, text) {
+                // 预览时不使用 crossorigin，确保任何图床都能显示
+                return `<div class="img-container"><img src="${href}" alt="${text}" referrerpolicy="no-referrer"></div>`;
+            }
+        };
+        marked.use({ renderer });
+
+        window.onload = function() { 
+            // 1. 初始化变量和数据
+            initColorPalette();
+            uploadedCoverImage = defaultCoverImg;
+            document.documentElement.style.setProperty('--portrait-bg', `url('${uploadedCoverImage}')`);
+
+            // 2. 默认字体初始化
+            const fCover = document.getElementById('fontCoverSelect').value;
+            const fHead = document.getElementById('fontHeadSelect').value;
+            const fBody = document.getElementById('fontBodySelect').value;
+            document.documentElement.style.setProperty('--font-cover', fCover);
+            document.documentElement.style.setProperty('--font-content-head', fHead);
+            document.documentElement.style.setProperty('--font-content-body', fBody);
+            
+            // 3. 绑定图片上传事件
+            document.getElementById('coverImageUpload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        uploadedCoverImage = event.target.result;
+                        document.documentElement.style.setProperty('--portrait-bg', `url('${uploadedCoverImage}')`);
+                        render();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // 4. 触发默认样式点击和初始渲染
+            document.querySelector('.btn-romantic').click();
+            updateParams(); 
+        };
+
+        function initColorPalette() {
+            const container = document.getElementById('colorPalette');
+            container.innerHTML = ''; // 清空容器，避免重复添加
+            colorPresets.forEach((preset, index) => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.background = preset.value;
+                swatch.onclick = () => applyTitleColor(preset);
+                
+                // 添加右键删除功能
+                swatch.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    if (confirm(`确定要删除"${preset.name}"吗？`)) {
+                        colorPresets.splice(index, 1);
+                        initColorPalette();
+                    }
+                };
+                
+                container.appendChild(swatch);
+            });
+        }
+        
+        // 切换字体设置的显示/隐藏
+        function toggleFontSettings() {
+            const container = document.getElementById('fontSettingsContainer');
+            const toggle = document.getElementById('fontSettingsToggle');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                toggle.innerHTML = '<i class="ph ph-caret-up"></i>';
+            } else {
+                container.style.display = 'none';
+                toggle.innerHTML = '<i class="ph ph-caret-down"></i>';
+            }
+        }
+        
+        // 恢复正文默认颜色
+        function resetContentColors(event) {
+            if (event) event.stopPropagation(); // 防止触发折叠
+            
+            const defaults = {
+                '--content-head-color': '#000000',
+                '--content-text-color': '#000000',
+                '--strong-color': '#FF2442'
+            };
+            
+            for (const [prop, val] of Object.entries(defaults)) {
+                document.documentElement.style.setProperty(prop, val);
+            }
+            
+            // 更新全局变量
+            currentStrongColor = '#FF2442';
+            
+            // 同步输入框
+            if (document.getElementById('contentHeadColor')) document.getElementById('contentHeadColor').value = '#000000';
+            if (document.getElementById('contentTextColor')) document.getElementById('contentTextColor').value = '#000000';
+            if (document.getElementById('contentStrongColor')) document.getElementById('contentStrongColor').value = '#FF2442';
+            
+            // 重新渲染
+            render();
+        }
+        
+        // 切换正文颜色设置的显示/隐藏
+        function toggleContentColors() {
+            const container = document.getElementById('contentColorsContainer');
+            const toggle = document.getElementById('contentColorsToggle');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                toggle.innerHTML = '<i class="ph ph-caret-up"></i>';
+                // 同步输入框初始值
+                document.getElementById('contentHeadColor').value = getComputedStyle(document.documentElement).getPropertyValue('--content-head-color').trim();
+                document.getElementById('contentTextColor').value = getComputedStyle(document.documentElement).getPropertyValue('--content-text-color').trim();
+                document.getElementById('contentStrongColor').value = getComputedStyle(document.documentElement).getPropertyValue('--strong-color').trim();
+            } else {
+                container.style.display = 'none';
+                toggle.innerHTML = '<i class="ph ph-caret-down"></i>';
+            }
+        }
+        
+        // 更新正文标题颜色
+        function updateContentHeadColor() {
+            const color = document.getElementById('contentHeadColor').value;
+            document.documentElement.style.setProperty('--content-head-color', color);
+            render();
+        }
+        
+        // 更新正文内容颜色
+        function updateContentTextColor() {
+            const color = document.getElementById('contentTextColor').value;
+            document.documentElement.style.setProperty('--content-text-color', color);
+            render();
+        }
+        
+        // 更新正文加粗颜色
+        function updateContentStrongColor() {
+            const color = document.getElementById('contentStrongColor').value;
+            document.documentElement.style.setProperty('--strong-color', color);
+            currentStrongColor = color;
+            render();
+        }
+        
+        // 切换样式标题色彩设置的显示/隐藏
+        function toggleStyleColors() {
+            const container = document.getElementById('styleColorsContainer');
+            const toggle = document.getElementById('styleColorsToggle');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                toggle.innerHTML = '<i class="ph ph-caret-up"></i>';
+                // 初始化样式色彩预制色面板
+                initStylePalettes();
+            } else {
+                container.style.display = 'none';
+                toggle.innerHTML = '<i class="ph ph-caret-down"></i>';
+            }
+        }
+        
+        // 切换排版细节设置的显示/隐藏
+        function toggleLayoutSettings() {
+            const container = document.getElementById('layoutSettingsContainer');
+            const toggle = document.getElementById('layoutSettingsToggle');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                toggle.innerHTML = '<i class="ph ph-caret-up"></i>';
+            } else {
+                container.style.display = 'none';
+                toggle.innerHTML = '<i class="ph ph-caret-down"></i>';
+            }
+        }
+        
+        // 切换封面设置的显示/隐藏
+        function toggleCoverSettings() {
+            const container = document.getElementById('coverSettingsContainer');
+            const toggle = document.getElementById('coverSettingsToggle');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                toggle.innerHTML = '<i class="ph ph-caret-up"></i>';
+            } else {
+                container.style.display = 'none';
+                toggle.innerHTML = '<i class="ph ph-caret-down"></i>';
+            }
+        }
+        
+        // 初始化样式色彩预制色面板
+        function initStylePalettes() {
+            const styleIds = ['aurora', 'fresh', 'romantic', 'chinese'];
+            styleIds.forEach(styleId => {
+                const paletteContainer = document.getElementById(`${styleId}Palette`);
+                if (!paletteContainer.hasChildNodes()) {
+                    // 清空容器
+                    paletteContainer.innerHTML = '';
+                    
+                    // 遍历所有预制色，创建颜色样本
+                    colorPresets.forEach((preset, index) => {
+                        const colorSample = document.createElement('div');
+                        colorSample.className = 'color-sample';
+                        colorSample.style.cssText = `
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 4px;
+                            background-color: ${preset.value};
+                            cursor: pointer;
+                            border: 1px solid #ddd;
+                        `;
+                        colorSample.title = preset.name;
+                        
+                        // 点击事件：将颜色应用到对应样式的颜色选择器
+                        colorSample.addEventListener('click', () => {
+                            const colorPicker = document.getElementById(`${styleId}TitleColor`);
+                            colorPicker.value = preset.value;
+                        });
+                        
+                        paletteContainer.appendChild(colorSample);
+                    });
+                }
+            });
+        }
+        
+        // 添加新的预制色 - 直接使用当前颜色选择器的颜色，不需要设置名字
+        function addColorPreset() {
+            const colorPicker = document.getElementById('titleColorPicker');
+            const color = colorPicker.value;
+            
+            // 直接添加颜色，使用颜色值作为名称
+            colorPresets.push({
+                name: color,
+                type: 'solid',
+                value: color
+            });
+            initColorPalette();
+        }
+
+        function togglePalette() {
+            const p = document.getElementById('paletteContainer');
+            if (p.style.display === 'flex') p.style.display = 'none';
+            else p.style.display = 'flex';
+        }
+
+        function applyTitleColor(preset) {
+            const root = document.documentElement.style;
+            if (preset.type === 'solid') {
+                root.setProperty('--title-color', preset.value);
+                root.setProperty('--title-gradient', 'none');
+                root.setProperty('--title-clip', 'border-box');
+                root.setProperty('--title-text-fill', 'currentColor');
+            } else {
+                root.setProperty('--title-gradient', preset.value);
+                root.setProperty('--title-clip', 'text');
+                root.setProperty('--title-text-fill', 'transparent');
+            }
+            // 重新渲染以确保样式生效
+            render();
+        }
+
+        function updateTitleColor(type) {
+            const root = document.documentElement.style;
+            if (type === 'solid') {
+                const color = document.getElementById('titleColorPicker').value;
+                root.setProperty('--title-color', color);
+                root.setProperty('--title-gradient', 'none');
+                root.setProperty('--title-clip', 'border-box');
+                root.setProperty('--title-text-fill', 'currentColor');
+            } else {
+                // 重置为默认主题样式
+                root.setProperty('--title-color', '#000');
+                root.setProperty('--title-gradient', 'none');
+                root.setProperty('--title-clip', 'border-box');
+                root.setProperty('--title-text-fill', 'currentColor');
+            }
+            // 重新渲染以确保样式生效
+            render();
+        }
+
+        function removeCoverImage() {
+            uploadedCoverImage = null;
+            document.getElementById('coverImageUpload').value = '';
+            document.documentElement.style.setProperty('--portrait-bg', 'none');
+            render();
+        }
+
+        // --- 核心样式切换函数 ---        
+        function setStyle(style, color, btn) {
+            currentStyle = style;
+            currentStrongColor = color;
+            document.documentElement.style.setProperty('--strong-color', color);
+            document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // 根据不同模式设置正确的默认标题样式
+            if (style === 'style-romantic') {
+                applyTitleColor(colorPresets[colorPresets.length - 1]);
+            } else if (style === 'style-fresh') {
+                // 清新模式：使用预制色11（索引10）
+                applyTitleColor(colorPresets[10]);
+            } else if (style === 'style-chinese') {
+                // 国潮模式：使用预制色8（索引7）
+                applyTitleColor(colorPresets[7]);
+            } else if (style === 'style-aurora') {
+                // 极光模式：使用最后一个预制色
+                applyTitleColor(colorPresets[colorPresets.length - 1]);
+            } else {
+                // 其他模式：重置CSS变量
+                const root = document.documentElement.style;
+                root.removeProperty('--title-gradient');
+                root.removeProperty('--title-clip');
+                root.removeProperty('--title-text-fill');
+                root.removeProperty('--title-color');
+            }
+            
+            render();
+        }
+
+        function setAlign(align) {
+            const root = document.documentElement.style;
+            let alignItems = 'center';
+            let textAlign = 'center';
+            if (align === 'left') { alignItems = 'flex-start'; textAlign = 'left'; }
+            if (align === 'right') { alignItems = 'flex-end'; textAlign = 'right'; }
+            root.setProperty('--cover-align-items', alignItems);
+            root.setProperty('--cover-text-align', textAlign);
+            
+            document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function updateParams() {
+            const cz = document.getElementById('cardZoom').value;
+            const cv = document.getElementById('coverScale').value;
+            const ct = document.getElementById('contentScale').value;
+            const bs = document.getElementById('bodySize').value;
+            const ds = document.getElementById('density').value;
+            const ratio = document.getElementById('imgRatioSelect').value;
+
+            // 设置缩放 CSS 变量，解决重合 bug
+            document.documentElement.style.setProperty('--card-scale', cz);
+
+            document.documentElement.style.setProperty('--cover-scale', cv);
+            document.documentElement.style.setProperty('--content-scale', ct);
+            document.documentElement.style.setProperty('--body-size', bs + 'px');
+            document.documentElement.style.setProperty('--img-aspect', ratio);
+            
+            if (ratio === 'auto') {
+                 document.documentElement.style.setProperty('--img-fit', 'contain');
+            } else {
+                 document.documentElement.style.setProperty('--img-fit', 'cover');
+            }
+            
+            document.getElementById('czVal').innerText = Math.round(cz * 100) + '%';
+            document.getElementById('cvVal').innerText = cv;
+            document.getElementById('ctVal').innerText = ct;
+            document.getElementById('bsVal').innerText = bs;
+            document.getElementById('dsVal').innerText = ds;
+
+            render();
+        }
+
+        // [修改] 智能分页函数：遇到图片自动换页，防止切割
+        function smartSplit(text, threshold) {
+            const rawLines = text.split('\n');
+            const chunks = [];
+            let currentChunkLines = [];
+            let currentHeight = 0;
+            
+            // 稍微调低安全高度，给页脚留空间
+            const SAFE_MAX_HEIGHT = 440;
+            const CAPACITY_FACTOR = threshold / 200.0;
+            const MAX_LOAD = SAFE_MAX_HEIGHT * CAPACITY_FACTOR;
+
+            rawLines.forEach(line => {
+                let lineHeight = 30;
+                const trimLine = line.trim();
+
+                // 1. 估算文字高度
+                if (trimLine.startsWith('# ')) lineHeight = 60;
+                else if (trimLine.startsWith('## ')) lineHeight = 50;
+                else if (trimLine.startsWith('### ')) lineHeight = 40;
+                
+                // 2. [关键] 增强对图片的检测
+                else if (trimLine.startsWith('![')) {
+                    lineHeight = 280; // [修改] 降低图片预留高度，让短内容可以和图片共存
+                    
+                    // [优化] 智能图片分页：只有当当前页剩余空间不足以容纳图片时才换页
+                    // 确保短内容页可以和图片共存，长内容页才自动换页
+                }
+                else if (trimLine === '') lineHeight = 15;
+
+                // 3. 估算普通段落高度
+                const charCount = line.length;
+                if (charCount > 22 && !trimLine.startsWith('![')) {
+                    lineHeight += Math.floor(charCount / 22) * 30;
+                }
+
+                // 4. 判断是否需要换页
+                if (currentHeight + lineHeight > MAX_LOAD && currentChunkLines.length > 0) {
+                    chunks.push(currentChunkLines.join('\n'));
+                    currentChunkLines = [];
+                    currentHeight = 0;
+                }
+                
+                currentChunkLines.push(line);
+                currentHeight += lineHeight;
+            });
+
+            if (currentChunkLines.length > 0) chunks.push(currentChunkLines.join('\n'));
+            return chunks;
+        }
+
+        function formatText(text) { return text.replace(/\n/g, '<br/>'); }
+        function getSvg(id) { return document.getElementById(id).outerHTML; }
+
+        function render() {
+            const mainTitle = document.getElementById('mainTitle').value;
+            const subTitle = document.getElementById('subTitle').value;
+            let bodyText = document.getElementById('bodyText').value;
+            const footer = document.getElementById('footerText').value;
+            const showIssue = document.getElementById('showIssue').checked;
+            const issueText = document.getElementById('issueText').value;
+            const coverRightText = document.getElementById('coverFooterRight').value;
+            const imgPos = document.getElementById('imgPosSelect').value;
+            
+            const fCover = document.getElementById('fontCoverSelect').value;
+            const fHead = document.getElementById('fontHeadSelect').value;
+            const fBody = document.getElementById('fontBodySelect').value;
+
+            const root = document.documentElement.style;
+            root.setProperty('--font-cover', fCover);
+            root.setProperty('--font-content-head', fHead);
+            root.setProperty('--font-content-body', fBody);
+
+            // 在渲染前，将正文中的本地图片占位符(IMG_1, IMG_2...)替换为真实的 Base64 数据
+            Object.keys(bodyImageMap).forEach(imgId => {
+                const base64 = bodyImageMap[imgId];
+                const regex = new RegExp(`\\(${imgId}\\)`, 'g');
+                bodyText = bodyText.replace(regex, `(${base64})`);
+            });
+
+            const container = document.getElementById('previewArea');
+            container.innerHTML = '';
+
+            const chunks = bodyText ? smartSplit(bodyText, parseInt(document.getElementById('density').value)) : [];
+            const totalPages = chunks.length;
+
+            // --- Cover Logic ---
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'card-container';
+            const coverWrapper = document.createElement('div');
+            coverWrapper.className = `card-wrapper ${currentStyle}`;
+            
+            const issueHtml = showIssue ? `<div class="issue-tag">${issueText}</div>` : '';
+            
+            const badge = currentStyle === 'style-aurora' || currentStyle === 'style-romantic'
+                ? `<div class="aurora-badge">${getSvg('icon-diamond')} ${coverRightText}</div>` 
+                : `<span>${coverRightText}</span>`;
+
+            let illustrationHtml = '';
+            if (uploadedCoverImage && currentStyle !== 'style-portrait') {
+                // 预览时不使用 crossorigin，确保任何图床或本地base64都能显示
+                illustrationHtml = `<img src="${uploadedCoverImage}" class="cover-image-inset" alt="Cover Illustration" referrerpolicy="no-referrer">`;
+            }
+
+            let centerContent = '';
+            const titleHtml = `<div class="cover-title default-gradient">${formatText(mainTitle)}</div>`;
+            const subHtml = `<div class="cover-sub">${formatText(subTitle)}</div>`;
+            
+            if (imgPos === 'top') {
+                centerContent = illustrationHtml + titleHtml + subHtml;
+            } else {
+                centerContent = titleHtml + subHtml + illustrationHtml;
+            }
+
+            // 检查是否有封面图片
+            const hasCoverImage = uploadedCoverImage && currentStyle !== 'style-portrait';
+            // 调整图片在文字下方时的封面排版
+            let centerClass = hasCoverImage ? 'cover-center has-image' : 'cover-center';
+            if (hasCoverImage && imgPos === 'bottom') {
+                centerClass += ' bottom-image';
+            }
+            
+            if (currentStyle === 'style-portrait' && uploadedCoverImage) {
+                coverWrapper.innerHTML = `
+                <div class="inner-card is-cover" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%), url('${uploadedCoverImage}'); background-size: cover; background-position: center;">
+                    <div class="cover-layout">
+                        <div></div>
+                        <div class="cover-center">
+                            <div class="cover-title">${formatText(mainTitle)}</div>
+                            <div class="cover-sub">${formatText(subTitle)}</div>
+                        </div>
+                    </div>
+                </div>`;
+            } else {
+                let extraHtml = '';
+                if (currentStyle === 'style-matcha') {
+                    extraHtml = '<div class="deco-circle" style="width:150px;height:150px;top:-30px;right:-30px;"></div><div class="deco-circle" style="width:100px;height:100px;bottom:20px;left:-20px;"></div>';
+                }
+                
+                if (currentStyle === 'style-chinese') {
+                    extraHtml = ''; 
+                }
+
+                coverWrapper.innerHTML = `
+                <div class="inner-card is-cover">
+                    ${extraHtml}
+                    <div class="cover-layout">
+                        <div style="width:100%">${issueHtml}</div>
+                        <div class="${centerClass}">
+                            ${centerContent}
+                        </div>
+                        <div class="cover-footer">
+                            <span class="footer-left">${footer}</span>
+                            ${badge}
+                        </div>
+                    </div>
+                </div>`;
+            }
+            cardContainer.appendChild(coverWrapper);
+            container.appendChild(cardContainer);
+
+            // --- Content ---
+            chunks.forEach((chunk, i) => {
+                const contentContainer = document.createElement('div');
+                contentContainer.className = 'card-container';
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = `card-wrapper ${currentStyle}`;
+                
+                if (currentStyle === 'style-portrait' && uploadedCoverImage) {
+                    cardWrapper.style.backgroundImage = `url('${uploadedCoverImage}')`;
+                    cardWrapper.style.backgroundRepeat = 'no-repeat';
+                    cardWrapper.style.backgroundSize = 'cover';
+                    cardWrapper.style.backgroundPosition = 'center';
+                    
+                    cardWrapper.style.backdropFilter = 'blur(20px)';
+                }
+
+                const html = marked.parse(chunk);
+                const pageNum = `<span>${i+1} / ${totalPages}</span>`;
+                
+                let novelHeader = '';
+                if (currentStyle === 'style-novel') {
+                    novelHeader = `<div class="novel-header"><span>${mainTitle.split('\n')[0]}</span><span>${pageNum}</span></div>`;
+                }
+
+                let contentHtml = `
+                    <div class="inner-card">
+                        ${novelHeader}
+                        <div class="content-body">
+                            <div class="markdown-content">${html}</div>
+                        </div>
+                        <div class="content-footer">
+                            <span class="footer-left">${footer}</span>
+                            ${currentStyle !== 'style-novel' ? pageNum : ''}
+                        </div>
+                    </div>`;
+                
+                cardWrapper.innerHTML = contentHtml;
+                contentContainer.appendChild(cardWrapper);
+                container.appendChild(contentContainer);
+            });
+        }
+
+        // [最终修复版] 下载函数：防缓存 + 防跨域 + 防标题黑块
+        async function downloadAll() {
+            // 1. 确保页面上的图片都加载完了再截图
+            const waitForImages = () => {
+                return new Promise((resolve) => {
+                    const images = document.querySelectorAll('img');
+                    if (images.length === 0) return resolve();
+                    let loaded = 0;
+                    images.forEach(img => {
+                        if (img.complete) {
+                            loaded++;
+                            if (loaded === images.length) resolve();
+                        } else {
+                            img.onload = () => { loaded++; if(loaded === images.length) resolve(); };
+                            img.onerror = () => { loaded++; if(loaded === images.length) resolve(); };
+                        }
+                    });
+                });
+            };
+            await waitForImages();
+            
+            const wrappers = document.querySelectorAll('.card-wrapper');
+            const btn = document.getElementById('dlBtn');
+            const oldText = btn.innerText;
+            btn.innerText = '生成中...'; btn.disabled = true;
+            
+            let zipName = "RedNote_Cards";
+            const titleVal = document.getElementById('mainTitle').value.trim();
+            if(titleVal) zipName = titleVal.replace(/[\\/:*?"<>|\n]/g, "_").substring(0, 30);
+
+            let count = 0;
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            let zip = isMobile ? null : new JSZip();
+            let imgFolder = isMobile ? null : zip.folder("images");
+
+            for (let i = 0; i < wrappers.length; i++) {
+                const bg = (currentStyle === 'style-simple') ? '#fff' : null;
+                try {
+                    const canvas = await html2canvas(wrappers[i], {
+                        scale: 2,
+                        useCORS: true, // 必须开启跨域
+                        allowTaint: false, // [关键修改] 必须设为false，否则 tainted 画布无法导出
+                        backgroundColor: bg,
+                        logging: false,
+                        
+                        onclone: (clonedDoc) => {
+                            // A. [核心修复] 给图片加时间戳，强制浏览器不读缓存，重新从腾讯云获取带CORS头的图片
+                            const images = clonedDoc.querySelectorAll('img');
+                            images.forEach(img => {
+                                img.crossOrigin = 'anonymous';
+                                
+                                // 如果是网络图片（不是base64），加个随机数尾巴
+                                if (img.src && img.src.startsWith('http')) {
+                                    // 拼接随机参数 ?t=123456...
+                                    const separator = img.src.includes('?') ? '&' : '?';
+                                    img.src = img.src + separator + 't=' + new Date().getTime();
+                                }
+                            });
+                            
+                            // B. 修复标题渐变色导出问题
+                            const coverTitles = clonedDoc.querySelectorAll('.cover-title');
+                            const rootStyles = document.documentElement.style;
+                            const isGradient = rootStyles.getPropertyValue('--title-gradient') !== 'none';
+                            
+                            coverTitles.forEach(title => {
+                                if (isGradient) {
+                                    let exportColor = currentStrongColor;
+                                    if(currentStyle === 'style-fresh') exportColor = document.getElementById('freshTitleColor').value;
+                                    if(currentStyle === 'style-romantic') exportColor = document.getElementById('romanticTitleColor').value;
+                                    if(currentStyle === 'style-aurora') exportColor = document.getElementById('auroraTitleColor').value;
+                                    if(currentStyle === 'style-chinese') exportColor = document.getElementById('chineseTitleColor').value;
+                                    
+                                    title.style.cssText = `
+                                        background-image: none !important;
+                                        -webkit-text-fill-color: initial !important;
+                                        color: ${exportColor} !important;
+                                        display: inline-block;
+                                        white-space: pre-wrap;
+                                        width: 100%;
+                                    `;
+                                }
+                            });
+                        }
+                    });
+                    
+                    const dataUrl = canvas.toDataURL('image/png');
+                    
+                    if (isMobile) {
+                        const link = document.createElement('a');
+                        link.download = `${zipName}_${i}.png`;
+                        link.href = dataUrl;
+                        link.click();
+                    } else {
+                        const base64 = dataUrl.split(',')[1];
+                        imgFolder.file(`${zipName}_${i===0?'Cover':'Page_'+i}.png`, base64, {base64: true});
+                    }
+                    count++;
+                } catch(e) { console.error(e); }
+            }
+            
+            if (!isMobile && count > 0) {
+                const content = await zip.generateAsync({type:"blob"});
+                saveAs(content, `${zipName}.zip`);
+            }
+            
+            if (count === 0) alert("生成失败，请检查图片跨域配置");
+            btn.innerText = oldText; btn.disabled = false;
+        }
+    </script>
+</body>
+</html>
