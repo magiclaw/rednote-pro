@@ -2,6 +2,12 @@
 
 将 Markdown 内容排版为小红书风格的卡片图片，支持多种样式、封面设置与一键导出。纯前端单文件，无需后端，开箱即用。
 
+<img width="1692" height="1484" alt="wechat_2026-01-25_120430_159" src="https://github.com/user-attachments/assets/f86eba98-b8fc-4f34-8960-2dc5f8e66e0d" />
+
+<img width="1996" height="1268" alt="wechat_2026-01-30_223927_824" src="https://github.com/user-attachments/assets/9a187981-e788-4994-b9c5-4160818e43dd" />
+
+<img width="1998" height="1292" alt="wechat_2026-01-30_223947_365" src="https://github.com/user-attachments/assets/83e3d80e-371e-47c4-bdbf-09cb600fd1a4" />
+
 ---
 
 ## 功能概览
@@ -12,9 +18,13 @@
 - **导出**：单张图片或整份 ZIP 打包下载，适合直接发小红书
 - **零依赖安装**：脚本与字体均通过 CDN 加载，用浏览器打开 `xshnew.html` 即可使用
 
+<img width="1016" height="1360" alt="wechat_2026-01-30_224045_248" src="https://github.com/user-attachments/assets/39e86cf0-82b6-40d1-9ec3-844a5632434c" />
+
+
 ---
 
 ## 快速开始
+<img width="2808" height="1842" alt="微信图片_20260130221213_4763_205" src="https://github.com/user-attachments/assets/b3c6169e-0982-4f58-9d5a-b431577fd31a" />
 
 ### 本地使用
 
